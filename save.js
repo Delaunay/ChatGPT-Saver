@@ -15,45 +15,36 @@
      * Parses HTML and returns the conversation as an array of strings.
      * @returns the conversation as an array of strings.
      */
-    function GetConversation(){
+    function GetConversation(req){
+        function cleanGPTReply (x) {
+            const replyClone = x.cloneNode(true);
+            
+            const stickyDiv = replyClone.querySelector("div.sticky.top-9.md\\:top-\\[5\\.75rem\\]");
+            
+            if (stickyDiv) 
+                stickyDiv.remove();
 
-        /**
-         * Parses div of provided XPATH and returns the text content.
-         * @param {string} xpath XPATH of the div to parse.
-         * @returns text content of the div.
-         */
-        function parseDiv(xpath){
-            let text = "";
-            const result = document.evaluate(xpath, document.body, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-            if (result.singleNodeValue) {
-                const targetElement = result.singleNodeValue;
-                text = targetElement.textContent;
-            }
-            return text;
+            return replyClone.innerHTML;
         }
+
 
         const arr = [];
+        const extract = req === "html" ? cleanGPTReply : x => x.innerText;
+        const articles = document.querySelectorAll("article");
 
-        try{
-            const articles = document.querySelectorAll("article");
 
-            articles.forEach(article => {
-                const userPrompt = article.querySelector("div.whitespace-pre-wrap");
-                const gptReply = article.querySelector("div.markdown.prose.w-full.break-words.dark\\:prose-invert.dark");
+        articles.forEach(article => {
+            const userPrompt = article.querySelector("div.whitespace-pre-wrap");
+            const gptReply = article.querySelector("div.markdown.prose.w-full.break-words.dark\\:prose-invert.dark");
 
-                if (userPrompt) {
-                    arr.push({ role: "user", text: userPrompt.innerText });
-                } else if (gptReply) {
-                    arr.push({ role: "assistant", text: gptReply.innerText });
-                }
-            });
+            if (userPrompt) {
+                arr.push({ role: "user", text: extract(userPrompt) });
+            } else if (gptReply) {
+                arr.push({ role: "assistant", text: extract(gptReply) });
+            }
+        });
 
-            console.log(arr);
-        }
-        catch(e){
-            console.log("Conversation ended.");
-        }
-
+        console.log(arr);
         return arr;
     }
 
@@ -71,16 +62,17 @@
      */
     function processRequest(req){
         console.log("Running...");
+
         if(isChat()){
-            console.log("Chat detected");
-            console.log(`Type: ${req}`);
-            const thisConvo = GetConversation();
+            const thisConvo = GetConversation(req);
+
             if(req == "html"){
                 browser.runtime.sendMessage({command: "download", type: "html", content: thisConvo});
             }
             else if(req == "text"){
                 browser.runtime.sendMessage({command: "download", type: "text", content: thisConvo});
             }
+
             browser.runtime.sendMessage({command: "updatePopup", type: req, status: "success"});
         }
         else{

@@ -50,18 +50,15 @@ function downloadhtml(content){
     </style>`;
     const header = '<!DOCTYPE html><html lang=\'en\'><head>' + style +'<title>Conversation</title></head><body>';
     arr.push(header);
-    let i = 1;
     content.forEach(element => { 
-        // Mod 0 is a response, else it's a user prompt.
-        if(i % 2 == 0){
-            let line = `<div class="response">${element}</div>`;
+        if(element["role"] === "assistant"){
+            let line = `<div class="response">${element["text"]}</div>`;
             arr.push(line);
         }
         else{
-            let line = `<div class="prompt">${element}</div>`;
+            let line = `<div class="prompt">${element["text"]}</div>`;
             arr.push(line);
         }
-        i++;
     });
 
     const footer = '</body></html>';
@@ -76,10 +73,10 @@ function downloadhtml(content){
  * Downloads conversation as text file.
  */
 function downloadtext(content){   
-    // We need to add a newline after each message (element).
     const jsonString = JSON.stringify(content, null, 2);
-    // const conversationArray = content.flatMap(x => [x, "\r\n\r\n"]);
+
     const blob = new Blob([jsonString], { type: "application/json" }); 
+
     beginDownload(URL.createObjectURL(blob),'conversation.json');
 }
 
