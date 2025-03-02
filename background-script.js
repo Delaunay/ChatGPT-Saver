@@ -77,9 +77,10 @@ function downloadhtml(content){
  */
 function downloadtext(content){   
     // We need to add a newline after each message (element).
-    const conversationArray = content.flatMap(x => [x, "\r\n\r\n"]);
-    const blob = new Blob(conversationArray, { type: "text/plain" }); 
-    beginDownload(URL.createObjectURL(blob),'conversation.txt');
+    const jsonString = JSON.stringify(content, null, 2);
+    // const conversationArray = content.flatMap(x => [x, "\r\n\r\n"]);
+    const blob = new Blob([jsonString], { type: "application/json" }); 
+    beginDownload(URL.createObjectURL(blob),'conversation.json');
 }
 
 /**

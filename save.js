@@ -35,41 +35,25 @@
         const arr = [];
 
         try{
-            console.log("Getting convo:");
-            let convoOngoing = true;
-            let i = 1;
-            while(convoOngoing){
-                // if mod 0, then it's a response, else it's a user prompt.
-                if(i % 2 == 0){
-                    let xpathExpression = "./div[1]/div[2]/div[2]/div/main/div[2]/div/div/div/div[" + i + "]/div/div[2]/div[1]/div";
-                    let thisLine = parseDiv(xpathExpression);
-                    console.log(`Current line: ${thisLine}`);
-                    if(thisLine != ""){
-                        arr.push(thisLine.replace('This content may violate our content policy. If you believe this to be in error, please submit your feedback — your input will aid our research in this area.',''));
-                    }
-                    else{
-                        convoOngoing = false;
-                    }
+            const articles = document.querySelectorAll("article");
+
+            articles.forEach(article => {
+                const userPrompt = article.querySelector("div.whitespace-pre-wrap");
+                const gptReply = article.querySelector("div.markdown.prose.w-full.break-words.dark\\:prose-invert.dark");
+
+                if (userPrompt) {
+                    arr.push({ role: "user", text: userPrompt.innerText });
+                } else if (gptReply) {
+                    arr.push({ role: "assistant", text: gptReply.innerText });
                 }
-                else{
-                    let xpathExpression = "./div[1]/div[2]/div[2]/div/main/div[2]/div/div/div/div[" + i + "]/div/div[2]/div[1]/div";
-                    let thisLine = parseDiv(xpathExpression);
-                    console.log(`Current line: ${thisLine}`);
-                    if(thisLine != ""){
-                        arr.push(thisLine.replace('This content may violate our content policy. If you believe this to be in error, please submit your feedback — your input will aid our research in this area.',''));
-                    }
-                    else{
-                        convoOngoing = false;
-                    }
-                }
-                i++;
-            }
+            });
+
+            console.log(arr);
         }
         catch(e){
             console.log("Conversation ended.");
         }
 
-        console.log(`Done. Arr is ${arr}`);
         return arr;
     }
 
@@ -78,18 +62,7 @@
      * @returns true if the current page is a chat, false otherwise.
      */
     function isChat(){
-        let docURL = document.URL;
-        let firstMsg = null;
-        if(docURL.includes("chat.openai")){
-            const Ele = function getElementByXpath(path) {
-                return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-            }
-            firstMsg = Ele("/html/body/div[1]/div[2]/div[2]/div/main/div[2]/div/div/div/div[1]/div/div[2]/div[1]/div");
-            if(firstMsg != null){
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
     /**
      * If the current page is a chat, process the request by sending a message to background-script.js.
